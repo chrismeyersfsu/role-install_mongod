@@ -107,18 +107,19 @@
 
 - name: Create mongo superuser
   mongodb_user:
-    name: superuser
+    name: '{{ install_mongod_admin_username }}'
     password: '{{ install_mongod_admin_password }}'
-    database: admin
+    database: 'admin'
     roles: 'root'
     state: present
 
 - name: Create mongo tower user
   mongodb_user:
-    name: tower
-    login_user: superuser
+    name: '{{ install_mongod_user_username }}'
+    login_user: '{{ install_mongod_admin_username }}'
     login_password: '{{ install_mongod_admin_password }}'
-    password: '{{ install_mongod_tower_password }}'
-    database: system_tracking
+    password: '{{ install_mongod_user_password }}'
+    database: '{{ install_mongod_user_database }}'
     roles: 'readWrite'
     state: present
+
