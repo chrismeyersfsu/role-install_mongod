@@ -49,4 +49,4 @@ galaxy_info:
 dependencies:
   - chrismeyersfsu.required_vars
   - chrismeyersfsu.iptables
-  - { role: chrismeyersfsu.iptables, iptables_allowed_tcp_ports: [22, 27701] }
+  - { role: chrismeyersfsu.iptables, iptables_allowed_tcp_ports: [22, 27017] }
