@@ -83,7 +83,7 @@
   with_items: mongodb_deb_packages
   when: ansible_os_family == 'Debian'
 
-- name: Enable mongo authentication
+- name: Enable mongo outside connections
   lineinfile:
     dest: '/etc/mongod.conf'
     regexp: '^#?\s*bind_ip\s*='
