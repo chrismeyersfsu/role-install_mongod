@@ -1,6 +1,9 @@
 # mongod user 'admin' and 'tower' login passwords
+install_mongod_admin_username: ''
 install_mongod_admin_password: ''
-install_mongod_tower_password: ''
+install_mongod_user_username: ''
+install_mongod_user_password: ''
+install_mongod_user_database: ''
 
 # Indicate whether to verify gpg signatures during install
 gpgcheck: 1
@@ -39,3 +42,10 @@ el7_dependencies:
   - libselinux-python
   - setools-libs
   - yum-utils
+
+required_vars:
+  - 'install_mongod_admin_username'
+  - 'install_mongod_admin_password'
+  - 'install_mongod_user_username'
+  - 'install_mongod_user_password'
+  - 'install_mongod_user_database'
