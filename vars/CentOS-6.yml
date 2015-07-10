@@ -1,0 +1,15 @@
+---
+el_dependencies: '{{ el6_dependencies }}'
+yum_repo_rpms:
+    - '{{ epel_release_url_el6 }}'
+yum_repo_urls:
+    - 'http://copr.fedoraproject.org/coprs/jlaska/pymongo-28/repo/epel-6/jlaska-pymongo-28-epel-6.repo'
+    - 'http://repo.mongodb.org/yum/redhat/mongodb-org.repo'
+mongodb_rpm_packages:
+    - 'mongodb-org >= 3.0.2'
+    - 'mongodb-org-server'
+    - 'mongodb-org-shell'
+    - 'mongodb-org-mongos'
+    - 'mongodb-org-tools'
+    - 'python-pymongo = 2.8'
+    - 'python-pymongo-gridfs = 2.8'

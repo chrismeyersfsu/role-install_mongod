@@ -1,0 +1,124 @@
+---
+
+- include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'           # CentOS-6.5
+        - '{{ ansible_os_family }}-{{ ansible_distribution_version }}.yml'              # RedHat-6.5
+        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'     # CentOS-6
+        - '{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml'        # RedHat-6
+      paths: '../vars'
+
+- name: Install yum repository rpms
+  yum:
+    name: '{{ item }}'
+    state: present
+  with_items: yum_repo_rpms
+  when: ansible_os_family == 'RedHat'
+
+- name: Determine if rhui repository exists
+  stat:
+    path: '{{ redhat_rhui_repo_path }}'
+  changed_when: false
+  register: rhui_repo
+
+- name: Update rh-amazon-rhui-client (RHEL EC2 only)
+  yum: name=rh-amazon-rhui-client state=latest
+  when: ansible_distribution == 'RedHat' and rhui_repo.stat.exists
+
+- name: enable rhui repositories
+  ini_file:
+    dest: '{{ redhat_rhui_repo_path }}'
+    section: '{{ item }}'
+    option: enabled
+    value: 1
+  when: ansible_distribution == 'RedHat' and rhui_repo.stat.exists
+  with_items: redhat_rhui_repos
+
+- name: Determine if rhsm repository exists
+  stat:
+    path: '{{ redhat_rhsm_repo_path }}'
+  changed_when: false
+  register: rhsm_repo
+  when: ansible_os_family == 'RedHat'
+
+- name: Determine if rhsm system cert exists
+  stat:
+    path: '{{ redhat_rhsm_cert_path }}'
+  changed_when: false
+  register: rhsm_cert
+  when: ansible_os_family == 'RedHat'
+
+- name: Enable rhsm repositories
+  command: subscription-manager repos --enable '{{ item }}'
+  when: ansible_distribution == 'RedHat' and rhsm_repo.stat.exists and rhsm_cert.stat.exists
+  with_items: redhat_rhsm_repos
+
+- name: Install playbook dependencies (RedHat)
+  yum:
+    name: '{{ item }}'
+    state: installed
+  with_items: el_dependencies
+  when: ansible_os_family == 'RedHat'
+
+- name: Install yum repositories
+  get_url:
+    dest: /etc/yum.repos.d/
+    url: '{{ item }}'
+  when: yum_repo_urls is defined
+  with_items: yum_repo_urls
+  when: ansible_os_family == 'RedHat'
+
+- name: Install mongo (RedHat)
+  yum:
+    name: '{{ item }}'
+    state: installed
+  with_items: mongodb_rpm_packages
+  when: ansible_os_family == 'RedHat'
+
+- name: Install mongo (Ubuntu)
+  apt:
+    name: '{{ item }}'
+    state: installed
+  with_items: mongodb_deb_packages
+  when: ansible_os_family == 'Debian'
+
+- name: Enable mongo authentication
+  lineinfile:
+    dest: '/etc/mongod.conf'
+    regexp: '^#?\s*bind_ip\s*='
+    line: "bind_ip=0.0.0.0"
+    state: present
+  notify: restart mongo
+
+- name: Enable mongo authentication
+  lineinfile:
+    dest: '/etc/mongod.conf'
+    regexp: '^#?\s*auth\s*='
+    line: "auth=true"
+    state: present
+  notify: restart mongo
+
+- name: Enable and start mongo service
+  service:
+    name: mongod
+    enabled: yes
+    state: running
+
+- name: Create mongo superuser
+  mongodb_user:
+    name: superuser
+    password: '{{ install_mongod_admin_password }}'
+    database: admin
+    roles: 'root'
+    state: present
+
+- name: Create mongo tower user
+  mongodb_user:
+    name: tower
+    login_user: superuser
+    login_password: '{{ install_mongod_admin_password }}'
+    password: '{{ install_mongod_tower_password }}'
+    database: system_tracking
+    roles: 'readWrite'
+    state: present

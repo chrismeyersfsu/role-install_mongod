@@ -1,0 +1,41 @@
+# mongod user 'admin' and 'tower' login passwords
+install_mongod_admin_password: ''
+install_mongod_tower_password: ''
+
+# Indicate whether to verify gpg signatures during install
+gpgcheck: 1
+
+# Indicate the path to the RHUI repository file
+redhat_rhui_repo_path: '/etc/yum.repos.d/redhat-rhui.repo'
+
+# Specify RHEL RHUI repositories to enable (used in vars/*.yml).
+redhat_rhui_repos: []
+
+# Indicate the path to the subscription-manager repository file
+redhat_rhsm_repo_path: '/etc/yum.repos.d/redhat.repo'
+redhat_rhsm_cert_path: '/etc/pki/consumer/cert.pem'
+redhat_rhsm_conf_path: '/etc/rhsm/rhsm.conf'
+
+# Specify RHEL subscription-manager repositories to enable (used in vars/*.yml).
+redhat_rhsm_repos: []
+
+# Specify epel-release RPM locations (used in vars/*.yml).
+epel_release_url_el6: 'http://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm'
+epel_release_url_el7: 'http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm'
+
+# Specify dependencies for running the tasks.
+el6_dependencies:
+  - python-pip
+  - python-setuptools
+  - python-passlib  # Needed by htpasswd module
+  - libselinux-python
+  - setools-libs-python
+  - yum-utils
+
+el7_dependencies:
+  - python-pip
+  - python-setuptools
+  - python-passlib  # Needed by htpasswd module
+  - libselinux-python
+  - setools-libs
+  - yum-utils

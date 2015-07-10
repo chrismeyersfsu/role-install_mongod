@@ -1,0 +1,15 @@
+---
+apt_keys:
+    - 'https://docs.mongodb.org/10gen-gpg-key.asc'
+
+apt_repos:
+    - 'ppa:chris-lea/python-pymongo'
+    - 'deb http://repo.mongodb.org/apt/ubuntu precise/mongodb-org/3.0 multiverse'
+
+mongodb_deb_packages:
+    - 'mongodb-org'
+    - 'mongodb-org-server'
+    - 'mongodb-org-shell'
+    - 'mongodb-org-mongos'
+    - 'python-pymongo>=2.8*'
+    - 'python-pymongo<<3.0*'
