@@ -87,7 +87,7 @@
   lineinfile:
     dest: '/etc/mongod.conf'
     regexp: '^#?\s*bind_ip\s*='
-    line: "bind_ip=0.0.0.0"
+    line: "bind_ip={{ install_mongod_bind_ip }}"
     state: present
   notify: restart mongo
 
@@ -98,6 +98,14 @@
     line: "auth=true"
     state: present
   notify: restart mongo
+
+- name: Set mongo DB path
+  lineinfile:
+    dest: '/etc/mongod.conf'
+    regexp: '^#?\s*dbpath\s*='
+    line: "dbpath={{ install_mongod_dbpath }}"
+    state: present
+  when: install_mongod_dbpath != ''
 
 - name: Enable and start mongo service
   service:
@@ -112,6 +120,7 @@
     database: 'admin'
     roles: 'root'
     state: present
+  run_once: true
 
 - name: Create mongo tower user
   mongodb_user:
@@ -122,4 +131,80 @@
     database: '{{ install_mongod_user_database }}'
     roles: 'readWrite'
     state: present
+  run_once: true
+
+- name: Enable mongo replication set
+  lineinfile:
+    dest: '/etc/mongod.conf'
+    regexp: '^#?\s*replSet\s*='
+    line: "replSet={{ install_mongod_replset }}"
+    state: present
+  notify: restart mongo
+  when: install_mongod_replset != ''
+
+- name: Enable mongo replication authentication
+  lineinfile:
+    dest: '/etc/mongod.conf'
+    regexp: '^#?\s*keyFile\s*='
+    line: "keyFile={{ install_mongod_keyfile }}"
+    state: present
+  notify: restart mongo
+  when: install_mongod_keyfile != ''
+
+- name: Ensure mongo replication keyfile path exists
+  file:
+    path: "{{ install_mongod_keyfile | dirname }}"
+    state: directory
+    mode: 0700
+    owner: mongod
+    group: mongod
+  when: install_mongod_keyfile != ''
+
+- name: Create keyfile
+  shell: "openssl rand -base64 741 > /var/tmp/{{ install_mongod_keyfile | basename }}"
+  args:
+    creates: "/var/tmp/{{ install_mongod_keyfile | basename }}"
+  delegate_to: localhost
+  when: install_mongod_keyfile != ''
+  sudo: no
+
+- name: Copy keyfile
+  copy:
+    src: "/var/tmp/{{ install_mongod_keyfile | basename }}"
+    dest: "{{ install_mongod_keyfile }}"
+    mode: 0600
+    owner: mongod
+    group: mongod
+  notify: restart mongo
+  when: install_mongod_keyfile != ''
+
+- meta: flush_handlers
+
+- name: Check for replication set status
+  command:
+    /usr/bin/mongo -u {{ install_mongod_admin_username }} -p {{ install_mongod_admin_password }} admin --eval 'printjson(rs.conf())'
+  register: replcheck
+  run_once: true
+  changed_when: false
+  ignore_errors: true
+
+- name: Initialise replication set
+  command:
+    /usr/bin/mongo -u {{ install_mongod_admin_username }} -p {{ install_mongod_admin_password }} admin --eval 'rs.initiate()'
+  run_once: true
+  when: install_mongod_replset != ''
+  changed_when: '"_id" not in replcheck.stdout'
+  register: initialise
+
+- name: Wait a moment for the RS to initialise
+  pause:
+    seconds: 2
+  when: initialise|changed
+
+- name: Add secondaries to replication set
+  command:
+    /usr/bin/mongo -u {{ install_mongod_admin_username }} -p {{ install_mongod_admin_password }} admin --eval 'rs.add("{{ item }}")'
+  run_once: true
+  with_items: "{{ groups['secondary'] | default([]) }}"
+  when: initialise|changed and item not in replcheck.stdout
 
