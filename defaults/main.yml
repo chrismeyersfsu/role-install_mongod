@@ -1,3 +1,6 @@
+# offline
+bundled: False
+
 # mongod user 'admin' and 'tower' login passwords
 install_mongod_admin_username: ''
 install_mongod_admin_password: ''
