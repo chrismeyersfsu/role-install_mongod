@@ -113,7 +113,7 @@
     roles: 'root'
     state: present
 
-- name: Create mongo tower user
+- name: Create mongo user
   mongodb_user:
     name: '{{ install_mongod_user_username }}'
     login_user: '{{ install_mongod_admin_username }}'
