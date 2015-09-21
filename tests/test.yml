@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  vars:
+    - install_mongod_admin_username: 'mongoroot'
+    - install_mongod_admin_password: 'superman'
+    - install_mongod_user_username: 'mongouser'
+    - install_mongod_user_password: 'password'
+    - install_mongod_user_database: 'mydb'
+  roles:
+    - { role: role-install_mongod }
+  tasks:
+    - name: test user connection to mongo
+      shell: "mongo localhost/{{ install_mongod_user_database }} --username={{ install_mongod_user_username }} --password={{ install_mongod_user_password }} --eval \"db.stats()\""
+

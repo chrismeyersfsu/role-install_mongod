@@ -32,21 +32,10 @@ galaxy_info:
   #  - utopic
   #  - vivid
   categories:
-  #- cloud
-  #- cloud:ec2
-  #- cloud:gce
-  #- cloud:rax
-  #- clustering
   - database
   - database:nosql
-  #- database:sql
-  #- development
-  #- monitoring
-  #- networking
-  #- packaging
-  #- system
-  #- web
 dependencies:
-  - chrismeyersfsu.required_vars
-  - chrismeyersfsu.iptables
+  #- chrismeyersfsu.required_vars
+  #- chrismeyersfsu.iptables
+  - { role: chrismeyersfsu.required_vars, required_vars: install_mongod_required_vars }
   - { role: chrismeyersfsu.iptables, iptables_allowed_tcp_ports: [22, 27017] }

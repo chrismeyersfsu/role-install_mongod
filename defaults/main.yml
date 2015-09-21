@@ -43,7 +43,7 @@ el7_dependencies:
   - setools-libs
   - yum-utils
 
-required_vars:
+install_mongod_required_vars:
   - 'install_mongod_admin_username'
   - 'install_mongod_admin_password'
   - 'install_mongod_user_username'
