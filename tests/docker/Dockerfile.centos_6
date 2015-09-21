@@ -1,0 +1,9 @@
+FROM centos:6.7
+
+RUN yum install -y epel-release
+RUN yum install -y python-pip python-devel python-paramiko git sudo gcc
+RUN pip install ansible
+RUN yum remove -y python-crypto
+
+EXPOSE 22
+#CMD ["tests/ansible_test_idempotence.sh"]
