@@ -1,14 +1,16 @@
 ---
-- hosts: localhost
+- hosts: primary:secondary
+  sudo: yes
   vars:
     - install_mongod_admin_username: 'mongoroot'
     - install_mongod_admin_password: 'superman'
     - install_mongod_user_username: 'mongouser'
     - install_mongod_user_password: 'password'
     - install_mongod_user_database: 'mydb'
+    - install_mongod_replset: tower
+    - install_mongod_keyfile: '/etc/pki/mongo/keyfile'
   roles:
-    - { role: role-install_mongod }
+    - { role: install_mongod, tags: mongo }
   tasks:
     - name: test user connection to mongo
       shell: "mongo localhost/{{ install_mongod_user_database }} --username={{ install_mongod_user_username }} --password={{ install_mongod_user_password }} --eval \"db.stats()\""
-
