@@ -1,9 +1,18 @@
+# offline
+bundled: False
+
 # mongod user 'admin' and 'tower' login passwords
 install_mongod_admin_username: ''
 install_mongod_admin_password: ''
 install_mongod_user_username: ''
 install_mongod_user_password: ''
 install_mongod_user_database: ''
+
+# default to listening on all interfaces
+install_mongod_bind_ip: "0.0.0.0"
+install_mongod_keyfile: ''
+install_mongod_replset: ''
+install_mongod_dbpath: ''
 
 # Indicate whether to verify gpg signatures during install
 gpgcheck: 1
