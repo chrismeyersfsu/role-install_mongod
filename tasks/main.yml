@@ -83,20 +83,13 @@
   with_items: mongodb_deb_packages
   when: ansible_os_family == 'Debian'
 
-- name: Enable mongo outside connections
-  lineinfile:
+- name: Install mongod configuration
+  template:
+    src: 'mongod.conf.j2'
     dest: '/etc/mongod.conf'
-    regexp: '^#?\s*bind_ip\s*='
-    line: "bind_ip=0.0.0.0"
-    state: present
-  notify: restart mongo
-
-- name: Enable mongo authentication
-  lineinfile:
-    dest: '/etc/mongod.conf'
-    regexp: '^#?\s*auth\s*='
-    line: "auth=true"
-    state: present
+    mode: '0644'
+    owner: 'root'
+    group: 'root'
   notify: restart mongo
 
 - name: Enable and start mongo service
