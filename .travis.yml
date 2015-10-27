@@ -1,19 +1,32 @@
 sudo: required
+dist: trusty
 language: python
-python: "2.7"
-env:
-  matrix:
-    - DOCKER_FILE=Dockerfile.centos_6
-    #- DOCKER_FILE=Dockerfile.ubuntu_12.04
+python:
+  - "2.7"
 services:
   - docker
+env:
+  global:
+    - PATH="/usr/bin:$PATH"
 
 before_install:
+    # Ansible doesn't play well with virtualenv
+  - deactivate
   - sudo apt-get update -qq
+
 install:
-  - pip install ansible
-  - "{ echo '[defaults]'; echo 'roles_path = ../'; } >> ansible.cfg"
+  - sudo pip install docker-py
+    # software-properties-common for ubuntu 14.04
+    # python-software-properties for ubuntu 12.04
+  - sudo apt-get install -y sshpass software-properties-common python-software-properties
+  - sudo apt-add-repository -y ppa:ansible/ansible
+  - sudo apt-get update -qq
+  - sudo apt-get install -y ansible
+  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+  - ansible-galaxy install -r test/requirements.yml -p test/roles/
 
 script:
-  - ansible-playbook -i tests/inventory tests/test.yml --syntax-check
-  - tests/docker/run.sh ansible-playbook -i tests/inventory tests/test.yml --connection=local --sudo
+  # Ensure any invocation of ansible-playbook (i.e. sudo) results in host_key_checking disabled
+  - sudo ansible all -i "127.0.0.1," -m lineinfile -a "regexp=^#host_key_checking dest=/etc/ansible/ansible.cfg line='host_key_checking = False'" -c local
+  - ansible-playbook -i test/inventory test/main.yml --syntax-check
+  - sudo ansible-playbook -i test/inventory -e "provision_docker_privileged=true" test/main.yml

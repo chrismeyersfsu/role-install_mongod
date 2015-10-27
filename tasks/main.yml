@@ -1,5 +1,4 @@
 ---
-
 - include_vars: '{{ item }}'
   with_first_found:
     - files:
@@ -14,7 +13,7 @@
     name: '{{ item }}'
     state: present
   with_items: yum_repo_rpms
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == 'RedHat' and bundled|bool == False
 
 - name: Determine if rhui repository exists
   stat:
@@ -67,7 +66,7 @@
     url: '{{ item }}'
   when: yum_repo_urls is defined
   with_items: yum_repo_urls
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == 'RedHat' and bundled|bool == False
 
 - name: Install mongo (RedHat)
   yum:
@@ -76,6 +75,10 @@
   with_items: mongodb_rpm_packages
   when: ansible_os_family == 'RedHat'
 
+- name: Fix mongo init script on RedHat family 6
+  lineinfile: dest=/etc/init.d/mongod regexp='^\s*local pid=' line='  local pid=`pidof ${procname}`'
+  when: ansible_os_family == 'RedHat' and (ansible_distribution_version|version_compare('6', '>=') and ansible_distribution_version|version_compare('7', '<'))
+
 - name: Install mongo (Ubuntu)
   apt:
     name: '{{ item }}'
@@ -83,27 +86,23 @@
   with_items: mongodb_deb_packages
   when: ansible_os_family == 'Debian'
 
-- name: Enable mongo outside connections
-  lineinfile:
-    dest: '/etc/mongod.conf'
-    regexp: '^#?\s*bind_ip\s*='
-    line: "bind_ip=0.0.0.0"
-    state: present
-  notify: restart mongo
-
-- name: Enable mongo authentication
-  lineinfile:
-    dest: '/etc/mongod.conf'
-    regexp: '^#?\s*auth\s*='
-    line: "auth=true"
-    state: present
-  notify: restart mongo
-
 - name: Enable and start mongo service
   service:
     name: mongod
     enabled: yes
     state: running
+
+- name: Setup mongo keyfile
+  include: keyfile.yml
+
+- name: Install mongod configuration
+  template:
+    src: 'mongod.conf.j2'
+    dest: '/etc/mongod.conf'
+    mode: '0644'
+    owner: 'root'
+    group: 'root'
+  notify: restart mongo
 
 - name: Create mongo superuser
   mongodb_user:
@@ -112,6 +111,7 @@
     database: 'admin'
     roles: 'root'
     state: present
+  run_once: true
 
 - name: Create mongo tower user
   mongodb_user:
@@ -122,4 +122,44 @@
     database: '{{ install_mongod_user_database }}'
     roles: 'readWrite'
     state: present
+  run_once: true
+
+- meta: flush_handlers
+
+- name: Check for replication set status
+  command:
+    /usr/bin/mongo -u {{ install_mongod_admin_username }} -p {{ install_mongod_admin_password }} admin --eval 'printjson(rs.conf())'
+  register: replcheck
+  run_once: true
+  changed_when: false
+  ignore_errors: true
+  tags: registerit
+
+- name: Replication init data-structure
+  set_fact:
+    mongod_replication_struct:
+      _id: "tower"
+      members:
+        - _id: 0
+          host: "{{ inventory_hostname }}"
+
+- name: Initialise replication set
+  command:
+    /usr/bin/mongo -u {{ install_mongod_admin_username }} -p {{ install_mongod_admin_password }} admin --eval 'rs.initiate({{ mongod_replication_struct | to_json }})'
+  run_once: true
+  when: install_mongod_replset != ''
+  changed_when: '"_id" not in replcheck.stdout'
+  register: initialise
+
+- name: Wait a moment for the RS to initialise
+  pause:
+    seconds: 2
+  when: initialise|changed
+
+- name: Add secondaries to replication set
+  command:
+    /usr/bin/mongo -u {{ install_mongod_admin_username }} -p {{ install_mongod_admin_password }} admin --eval 'rs.add("{{ item }}")'
+  run_once: true
+  with_items: "{{ groups['secondary'] | default([]) }}"
+  when: initialise|changed and item not in replcheck.stdout
 

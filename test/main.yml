@@ -1,0 +1,62 @@
+- name: Bring up docker containers
+  hosts: all
+  vars:
+    inventory:
+      - name: install_mongod_one
+      - name: install_mongod_two 
+      - name: install_mongod_three 
+  roles:
+    - { role: provision_docker, 
+        provision_docker_company: 'foo', 
+        provision_docker_inventory: "{{ inventory }}",
+        tags: provision_docker }
+  tasks:
+    - name: Group primary
+      add_host:
+        hostname: "{{ item }}"
+        groups: primary
+      with_items:
+        - install_mongod_one
+      tags: provision_docker
+
+    - name: Group secondaries
+      add_host:
+        hostname: "{{ item }}"
+        groups: secondary
+      with_items:
+        - install_mongod_two
+        - install_mongod_three
+      tags: provision_docker
+
+- name: Test Install Mongo
+  hosts: primary:secondary
+  vars:
+    admin_user: "admin"
+    admin_pass: "secret_squirrel"
+    normal_user: "chris"
+    normal_pass: "morocco_mole"
+    db: "qq"
+  pre_tasks:
+     - debug: msg="Running on host {{ inventory_hostname }}, {{ hostvars[inventory_hostname]['ansible_ssh_host'] }}"
+
+  roles:
+     - { role: install_mongod
+        , install_mongod_admin_username: "{{ admin_user }}"
+        , install_mongod_admin_password: "{{ admin_pass }}"
+        , install_mongod_user_username: "{{ normal_user }}"
+        , install_mongod_user_password: "{{ normal_pass }}"
+        , install_mongod_user_database: "{{ db }}"
+        , install_mongod_bind_ip: '0.0.0.0'
+        , install_mongod_replset: tower
+        , install_mongod_keyfile: '/etc/pki/mongo/keyfile'
+        , install_mongod_dbpath: '/var/lib/mongo'
+        , tags: mongo }
+  tasks:
+    - name: Test connection to mongo instances.
+      command: "echo hi"
+    - name: Test connection as admin
+      command: "echo hi"
+    - name: Test connection as user
+      command: "echo hi"
+    - name: Test user access to db
+      command: "echo hi"

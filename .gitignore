@@ -1,3 +1,2 @@
-Dockerfile
-ansible.cfg
-*.swp
+*.sw?
+test/roles/
