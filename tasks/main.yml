@@ -138,7 +138,7 @@
 - name: Replication init data-structure
   set_fact:
     mongod_replication_struct:
-      _id: "tower"
+      _id: "{{ install_mongod_replset }}"
       members:
         - _id: 0
           host: "{{ inventory_hostname }}"
