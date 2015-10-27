@@ -58,3 +58,4 @@ required_vars:
   - 'install_mongod_user_username'
   - 'install_mongod_user_password'
   - 'install_mongod_user_database'
+  - 'install_mongod_dbpath'

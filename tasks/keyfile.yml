@@ -1,0 +1,27 @@
+- name: Ensure mongo replication keyfile path exists
+  file:
+    path: "{{ install_mongod_keyfile | dirname }}"
+    state: directory
+    mode: 0700
+    owner: mongod
+    group: mongod
+  when: install_mongod_keyfile != ''
+
+- name: Create keyfile
+  shell: "openssl rand -base64 741 > /var/tmp/{{ install_mongod_keyfile | basename }}"
+  args:
+    creates: "/var/tmp/{{ install_mongod_keyfile | basename }}"
+  delegate_to: localhost
+  when: install_mongod_keyfile != ''
+  sudo: no
+
+- name: Copy keyfile
+  copy:
+    src: "/var/tmp/{{ install_mongod_keyfile | basename }}"
+    dest: "{{ install_mongod_keyfile }}"
+    mode: 0600
+    owner: mongod
+    group: mongod
+  notify: restart mongo
+  when: install_mongod_keyfile != ''
+
