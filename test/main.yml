@@ -49,7 +49,6 @@
         , install_mongod_bind_ip: '0.0.0.0'
         , install_mongod_replset: tower
         , install_mongod_keyfile: '/etc/pki/mongo/keyfile'
-        , install_mongod_dbpath: '/var/lib/mongo'
         , tags: mongo }
   tasks:
     - name: Test connection to mongo instances.

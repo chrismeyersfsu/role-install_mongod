@@ -12,7 +12,7 @@ install_mongod_user_database: ''
 install_mongod_bind_ip: "0.0.0.0"
 install_mongod_keyfile: ''
 install_mongod_replset: ''
-install_mongod_dbpath: ''
+install_mongod_dbpath: '/var/lib/mongo'
 
 # Indicate whether to verify gpg signatures during install
 gpgcheck: 1
