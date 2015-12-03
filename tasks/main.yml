@@ -86,23 +86,14 @@
   with_items: mongodb_deb_packages
   when: ansible_os_family == 'Debian'
 
+- name: Setup mongo keyfile
+  include: keyfile.yml
+
 - name: Enable and start mongo service
   service:
     name: mongod
     enabled: yes
     state: running
-
-- name: Setup mongo keyfile
-  include: keyfile.yml
-
-- name: Install mongod configuration
-  template:
-    src: 'mongod.conf.j2'
-    dest: '/etc/mongod.conf'
-    mode: '0644'
-    owner: 'root'
-    group: 'root'
-  notify: restart mongo
 
 - name: Create mongo superuser
   mongodb_user:
@@ -123,6 +114,15 @@
     roles: 'readWrite'
     state: present
   run_once: true
+
+- name: Install mongod configuration
+  template:
+    src: 'mongod.conf.j2'
+    dest: '/etc/mongod.conf'
+    mode: '0644'
+    owner: 'root'
+    group: 'root'
+  notify: restart mongo
 
 - meta: flush_handlers
 
