@@ -37,6 +37,12 @@
     normal_pass: "morocco_mole"
     db: "qq"
   pre_tasks:
+       # TODO: Make this idempotent. Note: we can't use lininfile due to some dockerisms (mapped filesystem and file rename don't get along)
+     - name: "Build hosts file"
+       #lineinfile: dest=/etc/hosts regexp='.*{{ inventory_hostname }}$' line="{{ hostvars[inventory_hostname].ansible_default_ipv4.address }} {{inventory_hostname}}" state=present
+       shell: 'echo "{{ hostvars[inventory_hostname].ansible_default_ipv4.address }} {{ inventory_hostname }}" >> /etc/hosts'
+       when: hostvars[inventory_hostname].ansible_default_ipv4.address is defined
+
      - debug: msg="Running on host {{ inventory_hostname }}, {{ hostvars[inventory_hostname]['ansible_ssh_host'] }}"
 
   roles:
