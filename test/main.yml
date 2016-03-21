@@ -7,7 +7,6 @@
       - name: install_mongod_three 
   roles:
     - { role: provision_docker, 
-        provision_docker_company: 'foo', 
         provision_docker_inventory: "{{ inventory }}",
         tags: provision_docker }
   tasks:
