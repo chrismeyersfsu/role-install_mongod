@@ -37,5 +37,5 @@ galaxy_info:
 dependencies:
   #- chrismeyersfsu.required_vars
   #- chrismeyersfsu.iptables
-  - { role: chrismeyersfsu.required_vars, required_vars: install_mongod_required_vars }
-  - { role: chrismeyersfsu.iptables, iptables_allowed_tcp_ports: [22, 27017] }
+  - { role: chrismeyersfsu.role-required_vars, required_vars: install_mongod_required_vars }
+  - { role: chrismeyersfsu.role-iptables, iptables_allowed_tcp_ports: [22, 27017] }
